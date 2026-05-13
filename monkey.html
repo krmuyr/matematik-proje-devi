@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Kerem'in Dostu - Kesin Çözüm</title>
+    <style>
+        /* GENEL TASARIM */
+        body { background: #d2c1a8; font-family: 'Arial', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        #game-container { width: 950px; background: #f5ead2; border: 8px solid #5d4037; border-radius: 4px; padding: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+        /* ÜST PANEL */
+        .header { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .stats { display: flex; gap: 20px; }
+        .stat-item { font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 5px; }
+        .bar-bg { width: 100px; height: 15px; background: #ddd; border: 2px solid #333; border-radius: 10px; overflow: hidden; }
+        .bar-fill { height: 100%; }
+        #hunger { width: 40%; background: #ff4d4d; }
+        #happiness { width: 80%; background: #4caf50; }
+        #toilet { width: 50%; background: #a67c52; }
+        .author { font-size: 22px; font-weight: 900; color: #5d4037; }
+
+        /* OYUN ALANI */
+        .room { 
+            height: 300px; background: #fffbf0; border: 4px solid #bc9f8e; 
+            position: relative; display: flex; align-items: flex-end; 
+            justify-content: space-around; padding-bottom: 20px; margin-bottom: 15px;
+        }
+        .obj { text-align: center; position: relative; cursor: pointer; }
+        .label { 
+            position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
+            background: #fff; border: 1px solid #000; padding: 2px 5px; font-size: 12px; font-weight: bold; white-space: nowrap;
+        }
+        .icon { font-size: 50px; }
+
+        /* MAYMUN VE KONUŞMA */
+        #pet-wrapper { position: absolute; bottom: 20px; left: 55%; transform: translateX(-50%); transition: all 0.5s ease; z-index: 100; text-align: center; }
+        #monkey { font-size: 70px; display: block; filter: drop-shadow(2px 2px 0px #5d4037); }
+        #speech { 
+            position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 300px; font-weight: bold; color: #333; font-size: 16px;
+        }
+
+        /* ALT PANEL (KONSOL) */
+        .bottom-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; height: 180px; }
+        .chat-box { background: #fff; border: 2px solid #888; display: flex; flex-direction: column; }
+        #history { flex-grow: 1; overflow-y: auto; padding: 10px; font-family: monospace; font-size: 13px; border-bottom: 2px solid #888; }
+        .input-line { display: flex; }
+        #cmd-in { flex-grow: 1; border: none; padding: 10px; outline: none; }
+        #send-btn { padding: 10px 20px; background: #eee; border: none; cursor: pointer; font-weight: bold; border-left: 2px solid #888; }
+        .help-box { background: #fff8e1; border: 2px solid #888; padding: 10px; font-size: 11px; line-height: 1.5; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="header">
+        <div class="stats">
+            <div class="stat-item">🍴 Yemek <div class="bar-bg"><div class="bar-fill" id="hunger"></div></div></div>
+            <div class="stat-item">😊 Moral <div class="bar-bg"><div class="bar-fill" id="happiness"></div></div></div>
+            <div class="stat-item">🚽 Lavabo <div class="bar-bg"><div class="bar-fill" id="toilet"></div></div></div>
+        </div>
+        <div class="author">BY KEREM UYAR</div>
+    </div>
+
+    <div class="room">
+        <div id="pet-wrapper">
+            <div id="speech">[KEREM'İN DOSTU]<br>DİZİ İZLEMEK EN SEVDİĞİM ŞEY!</div>
+            <span id="monkey">🐒</span>
+        </div>
+
+        <div class="obj" onclick="interact('Mutfak')"><div class="label">Mutfak 🧊</div><div class="icon">🧊</div></div>
+        <div class="obj" onclick="interact('TV')"><div class="label">TV 📺</div><div class="icon">📺</div></div>
+        <div class="obj" onclick="interact('Dolap')"><div class="label">Dolap 🚪</div><div class="icon">🚪</div></div>
+        <div class="obj" onclick="interact('Banyo')"><div class="label">Banyo 🚽</div><div class="icon">🚽</div></div>
+        <div class="obj" onclick="interact('Yatak')"><div class="label">Yatak 🛏️</div><div class="icon">🛏️</div></div>
+    </div>
+
+    <div class="bottom-grid">
+        <div class="chat-box">
+            <div id="history"></div>
+            <div class="input-line">
+                <input type="text" id="cmd-in" placeholder="Komut girin (zıpla, şapkayı çıkar, merhaba de)...">
+                <button id="send-btn" onclick="handle()">Gönder</button>
+            </div>
+        </div>
+        <div class="help-box">
+            <b>KOMUTLAR VE SIK SORULANLAR</b><br>
+            1. <b>İsim Ver:</b> 'Adın [isim] olsun'<br>
+            2. <b>Komutlar:</b> 'zıpla', 'gez', 'şapkayı çıkar'<br>
+            3. <b>Konuşma:</b> '[Cümle]' yazın (Türkçe uyumlu)<br>
+            4. <b>Eşyalar:</b> Tıklayarak etkileşime geçin.
+        </div>
+    </div>
+</div>
+
+<script>
+    const hist = document.getElementById('history');
+    const input = document.getElementById('cmd-in');
+    const speech = document.getElementById('speech');
+    const pet = document.getElementById('pet-wrapper');
+
+    function log(user, text) {
+        hist.innerHTML += `<div><strong>[${user.toUpperCase()}]</strong> ${text}</div>`;
+        hist.scrollTop = hist.scrollHeight;
+    }
+
+    function say(text) {
+        speech.innerHTML = `[KEREM'İN DOSTU]<br>${text.toUpperCase()}`;
+        log("KEREM'İN DOSTU", text);
+    }
+
+    function handle() {
+        const val = input.value.trim();
+        if(!val) return;
+        log("KEREM", val);
+        const cmd = val.toLowerCase();
+
+        if(cmd === "zıpla") {
+            pet.style.transform = "translateX(-50%) translateY(-50px)";
+            setTimeout(() => pet.style.transform = "translateX(-50%) translateY(0)", 300);
+            say("Hoppa!");
+        } else if(cmd === "şapkayı çıkar") {
+            say("Şapka çıkarıldı! Teşekkürler Kerem! 👒");
+        } else if(cmd === "gez") {
+            pet.style.left = Math.random() * 70 + 15 + "%";
+            say("Oda çok ferahmış.");
+        } else if(cmd.includes(" de")) {
+            say(val.split(" de")[0].replace(/'/g, ""));
+        } else {
+            say("TABİ! '" + val.toUpperCase() + "'");
+        }
+        input.value = "";
+    }
+
+    function interact(name) {
+        say(name + " yanına gidiyorum!");
+        // Karakteri o yöne kaydır
+        if(name === "Mutfak") pet.style.left = "15%";
+        if(name === "Yatak") pet.style.left = "85%";
+    }
+
+    input.addEventListener("keyup", (e) => { if(e.key === "Enter") handle(); });
+    log("SİSTEM", "Oyun başladı kanka.");
+</script>
+
+</body>
+</html>

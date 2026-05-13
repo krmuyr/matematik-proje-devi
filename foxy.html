@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>By Kerem Uyar - Kusursuz AI Pet</title>
+    <style>
+        :root { --floor: #c2a382; --wall: #fdf5e6; }
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #000; touch-action: none; }
+        #header { position: absolute; top: 10px; right: 20px; color: #8b4513; font-weight: bold; font-size: 20px; z-index: 100; text-shadow: 1px 1px white; }
+        #game-window { width: 100vw; height: 100vh; background: var(--wall); position: relative; overflow: hidden; }
+        #floor { position: absolute; bottom: 0; width: 100%; height: 25%; background: var(--floor); border-top: 10px solid #8b4513; }
+        .item { position: absolute; font-size: 60px; cursor: pointer; text-align: center; z-index: 5; transition: transform 0.2s; }
+        .item:hover { transform: scale(1.1); }
+        .item span { display: block; font-size: 14px; font-weight: bold; background: white; border-radius: 5px; padding: 2px; border: 1px solid #8b4513; }
+        #fridge { bottom: 15%; left: 5%; }
+        #tv     { bottom: 15%; left: 25%; }
+        #closet { bottom: 15%; left: 45%; } 
+        #toilet { bottom: 15%; left: 65%; }
+        #bed    { bottom: 15%; left: 85%; }
+        #pet { position: absolute; font-size: 80px; z-index: 10; display: flex; flex-direction: column; align-items: center; pointer-events: none; width: 120px; transition: bottom 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+        #pet-name-tag { font-size: 16px; font-weight: bold; color: #333; background: rgba(255, 255, 255, 0.8); padding: 2px 8px; border-radius: 10px; margin-bottom: -5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        #hat { position: absolute; top: -15px; font-size: 35px; height: 40px; z-index: 11; }
+        #bubble { position: absolute; top: -80px; background: white; padding: 8px 12px; border-radius: 15px; border: 2px solid #333; font-size: 14px; display: none; white-space: nowrap; z-index: 12; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); }
+        #chat-area { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; z-index: 100; }
+        #message-box { background: white; padding: 12px; border-radius: 15px; border: 3px solid #4CAF50; margin-bottom: 8px; font-weight: bold; text-align: center; }
+        .input-group { display: flex; gap: 5px; }
+        input { flex: 1; padding: 12px; border-radius: 20px; border: 2px solid #ccc; outline: none; }
+        button { padding: 10px 15px; border-radius: 20px; border: none; background: #4CAF50; color: white; cursor: pointer; font-weight: bold; }
+        .stat-bar { background: rgba(255,255,255,0.9); padding: 5px 10px; border-radius: 15px; margin-bottom: 5px; font-size: 12px; width: 110px; border: 1px solid #ccc; }
+        .bar-outer { width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin-top: 3px; }
+        .bar-inner { height: 100%; transition: 0.5s; width: 100%; }
+        #setup { position: fixed; inset: 0; background: #fdf5e6; z-index: 900; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #death-screen { position: fixed; inset: 0; background: rgba(0,0,0,0.9); color: white; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div id="header">BY KEREM UYAR</div>
+
+<div id="setup">
+    <h1>Hayvanını Sahiplen</h1>
+    <div style="margin-top:20px;">
+        <button onclick="init('😸')" style="font-size:50px; background: white; border: 2px solid #8b4513; border-radius: 15px; margin: 5px;">😸</button>
+        <button onclick="init('🦊')" style="font-size:50px; background: white; border: 2px solid #8b4513; border-radius: 15px; margin: 5px;">🦊</button>
+        <button onclick="init('🐶')" style="font-size:50px; background: white; border: 2px solid #8b4513; border-radius: 15px; margin: 5px;">🐶</button>
+        <button onclick="init('🐵')" style="font-size:50px; background: white; border: 2px solid #8b4513; border-radius: 15px; margin: 5px;">🐵</button>
+    </div>
+</div>
+
+<div id="death-screen">
+    <h1>Eyvah! 😢</h1>
+    <p id="death-reason" style="font-size: 20px; margin: 20px;"></p>
+    <button onclick="localStorage.clear(); location.reload();" style="padding: 15px 30px; background: #f44336; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 18px;">Yeni Bir Başlangıç Yap</button>
+</div>
+
+<div id="game-window">
+    <div style="position:absolute; top:10px; left:10px; z-index:50;">
+        <div class="stat-bar">🍴 Yemek <div class="bar-outer"><div id="h-bar" class="bar-inner" style="background:red"></div></div></div>
+        <div class="stat-bar">😊 Moral <div class="bar-outer"><div id="m-bar" class="bar-inner" style="background:green"></div></div></div>
+        <div class="stat-bar">🚽 Lavabo <div class="bar-outer"><div id="t-bar" class="bar-inner" style="background:brown"></div></div></div>
+    </div>
+
+    <div id="floor"></div>
+
+    <div id="fridge" class="item" onclick="interact('yemek', 10)">🧊<span>Mutfak</span></div>
+    <div id="tv"     class="item" onclick="interact('oyun', 30)">📺<span>TV</span></div>
+    <div id="closet" class="item" onclick="interact('giysi', 50)">🗄️<span>Dolap</span></div>
+    <div id="toilet" class="item" onclick="interact('wc', 70)">🚽<span>Banyo</span></div>
+    <div id="bed"    class="item" onclick="interact('uyku', 88)">🛏️<span>Yatak</span></div>
+
+    <div id="pet" style="left:50%; bottom:15%;">
+        <div id="bubble"></div>
+        <div id="hat"></div>
+        <div id="pet-name-tag">İsimsiz</div>
+        <div id="pet-body">🐾</div>
+    </div>
+
+    <div id="chat-area">
+        <div id="message-box">Komutlar: zıpla, dur, gez, adın [isim] olsun</div>
+        <div class="input-group">
+            <input type="text" id="user-input" placeholder="Bir şey söyle...">
+            <button onclick="talk()">Gönder</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let game = { 
+        pet: '🐾', hunger: 100, happy: 100, toilet: 0,
+        x: 50, dx: 0.3, state: 'walk',
+        petName: "İSİMSİZ", userName: "", hat: "",
+        lastTime: Date.now() 
+    };
+
+    function init(emoji) {
+        game.pet = emoji;
+        game.lastTime = Date.now();
+        document.getElementById('setup').style.display = 'none';
+        document.getElementById('pet-body').innerText = emoji;
+        save();
+        animate();
+    }
+
+    window.onload = () => {
+        const saved = localStorage.getItem('keremPetGameV3');
+        if(saved) {
+            game = JSON.parse(saved);
+            let diff = (Date.now() - game.lastTime) / 1000;
+            
+            game.hunger -= (diff * 0.005); 
+            game.happy -= (diff * 0.003);
+            game.toilet += (diff * 0.004);
+            
+            if(game.hunger <= 0) {
+                document.getElementById('death-screen').style.display = 'flex';
+                document.getElementById('death-reason').innerText = game.petName + " açlıktan dolayı aramızdan ayrıldı...";
+                return;
+            }
+
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('pet-body').innerText = game.pet;
+            document.getElementById('pet-name-tag').innerText = game.petName;
+            document.getElementById('hat').innerText = game.hat;
+            animate();
+        }
+    };
+
+    function save() {
+        game.lastTime = Date.now();
+        localStorage.setItem('keremPetGameV3', JSON.stringify(game));
+    }
+
+    function animate() {
+        if(game.hunger <= 0) return;
+        const petEl = document.getElementById('pet');
+        const nameTag = document.getElementById('pet-name-tag');
+
+        if (game.state === 'walk') {
+            game.x += game.dx;
+            if (game.x >= 90 || game.x <= 5) {
+                game.dx *= -1;
+            }
+        }
+        
+        petEl.style.transform = game.dx > 0 ? "scaleX(1)" : "scaleX(-1)";
+        nameTag.style.transform = game.dx > 0 ? "scaleX(1)" : "scaleX(-1)";
+        petEl.style.left = game.x + "%";
+        
+        updateUI();
+        requestAnimationFrame(animate);
+    }
+
+    function say(txt) {
+        const bubble = document.getElementById('bubble');
+        bubble.innerText = txt;
+        bubble.style.display = 'block';
+        setTimeout(() => bubble.style.display = 'none', 3000);
+    }
+
+    function talk() {
+        const input = document.getElementById('user-input').value.toLowerCase().trim();
+        const box = document.getElementById('message-box');
+        const petEl = document.getElementById('pet');
+
+        if(input.includes("adın ") && input.includes(" olsun")) {
+            game.petName = input.replace("adın ", "").replace(" olsun", "").toUpperCase();
+            document.getElementById('pet-name-tag').innerText = game.petName;
+            box.innerText = "Süper isim! Artık adım " + game.petName + "! ✨";
+        }
+        else if(input.includes("zıpla")) {
+            petEl.style.bottom = "45%";
+            setTimeout(() => petEl.style.bottom = "15%", 300);
+            box.innerText = "Hoppa! 🚀";
+        }
+        else if(input.includes("dur")) {
+            game.state = 'idle';
+            box.innerText = "Duruyorum kanka. 🛑";
+        }
+        else if(input.includes("gez") || input.includes("yürü")) {
+            game.state = 'walk';
+            box.innerText = "Hadi gezelim! 🐾";
+        }
+        else if(input.includes("adım ne")) {
+            box.innerText = game.userName ? "Senin adın " + game.userName + "!" : "Henüz adını söylemedin.";
+        }
+        else if(input.includes("benim adım ")) {
+            game.userName = input.replace("benim adım ", "");
+            box.innerText = "Memnun oldum " + game.userName + "!";
+        }
+        
+        save();
+        document.getElementById('user-input').value = "";
+    }
+
+    function interact(type, tx) {
+        game.x = tx;
+        game.state = 'idle'; // Eşya kullanırken dursun
+        
+        if(type === 'yemek') { game.hunger = 100; say("Çok lezzetliydi! 🍗"); }
+        if(type === 'wc') { game.toilet = 0; say("Büyük rahatlık... 🚽"); }
+        if(type === 'oyun') { game.happy = 100; say("En sevdiğim dizi! 📺"); }
+        if(type === 'uyku') { game.happy += 20; say("Biraz kestirdim.. 🛏️"); }
+        if(type === 'giysi') {
+            const hats = ['🎓', '👑', '🎩', '🧢', '🎀', '🕶️', '🤠'];
+            game.hat = hats[Math.floor(Math.random()*hats.length)];
+            document.getElementById('hat').innerText = game.hat;
+            say("Yakıştı mı? 👗");
+        }
+        
+        save();
+        updateUI();
+        // 3 saniye sonra gezmeye devam etsin
+        setTimeout(() => { game.state = 'walk'; }, 3000);
+    }
+
+    function updateUI() {
+        document.getElementById('h-bar').style.width = Math.max(0, game.hunger) + "%";
+        document.getElementById('m-bar').style.width = Math.max(0, game.happy) + "%";
+        document.getElementById('t-bar').style.width = Math.min(100, game.toilet) + "%";
+    }
+
+    // Zamanla değerleri düşür
+    setInterval(() => {
+        if(game.hunger > 0) game.hunger -= 0.1;
+        if(game.happy > 0) game.happy -= 0.05;
+        if(game.toilet < 100) game.toilet += 0.08;
+        
+        if(game.hunger <= 0) {
+            document.getElementById('death-screen').style.display = 'flex';
+            document.getElementById('death-reason').innerText = game.petName + " aç kaldı...";
+        }
+        save();
+    }, 1000);
+</script>
+</body>
+</html>
