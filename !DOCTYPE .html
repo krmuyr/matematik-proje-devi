@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kerem Uyar - Pro Elektrik Lab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Orbitron:wght@400;700&family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: var(--bg-color);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .signature {
+            font-family: 'Dancing Script', cursive;
+            font-size: 4rem;
+            color: var(--accent);
+            margin-bottom: 5px;
+            text-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+        }
+
+        .lab-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            color: #94a3b8;
+        }
+
+        .game-area {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 800px;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+
+        .circuit-grid {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: #0f172a;
+            height: 300px;
+            border-radius: 15px;
+            margin: 20px 0;
+            position: relative;
+            border: 2px solid #334155;
+            overflow: hidden;
+        }
+
+        /* Bileşenler */
+        .component {
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .battery {
+            width: 100px;
+            height: 60px;
+            background: linear-gradient(90deg, #ef4444 70%, #334155 70%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .bulb {
+            width: 70px;
+            height: 70px;
+            background: #475569;
+            border-radius: 50% 50% 15% 15%;
+            border: 4px solid #334155;
+            position: relative;
+        }
+
+        .bulb::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 15px;
+            background: #94a3b8;
+            border-radius: 0 0 5px 5px;
+        }
+
+        .bulb.active {
+            background: #fbbf24;
+            box-shadow: 0 0 60px #fbbf24;
+            border-color: #f59e0b;
+        }
+
+        .switch-box {
+            width: 80px;
+            height: 40px;
+            background: #334155;
+            border-radius: 20px;
+            position: relative;
+            padding: 5px;
+        }
+
+        .switch-toggle {
+            width: 30px;
+            height: 30px;
+            background: #94a3b8;
+            border-radius: 50%;
+            transition: 0.3s;
+            position: absolute;
+            left: 5px;
+        }
+
+        .switch-box.on { background: var(--success); }
+        .switch-box.on .switch-toggle { left: 45px; background: white; }
+
+        /* Kablolar */
+        .wire-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .wire-line {
+            fill: none;
+            stroke: #475569;
+            stroke-width: 6;
+            stroke-linecap: round;
+            transition: 0.5s;
+        }
+
+        .wire-line.active {
+            stroke: var(--accent);
+            filter: drop-shadow(0 0 5px var(--accent));
+        }
+
+        /* UI Elemanları */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .info-panel {
+            background: rgba(15, 23, 42, 0.6);
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            border-left: 4px solid var(--accent);
+        }
+
+        button {
+            background: var(--accent);
+            color: #0f172a;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px var(--accent);
+        }
+
+        .mode-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            background: #334155;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="signature">Kerem Uyar</div>
+    <div class="lab-title">ELEKTRİK LABORATUVARI v2.0</div>
+
+    <div class="game-area">
+        <div id="modeDisplay" class="mode-badge">MOD: SERİ BAĞLAMA</div>
+        
+        <div class="circuit-grid">
+            <svg class="wire-svg">
+                <!-- Kablo yolları -->
+                <path id="path1" class="wire-line" d="M 150 250 L 50 250 L 50 150 L 100 150" />
+                <path id="path2" class="wire-line" d="M 250 150 L 350 150 L 350 250 L 250 250" />
+                <path id="path3" class="wire-line" d="M 450 150 L 700 150 L 700 250 L 600 250" />
+            </svg>
+
+            <div class="component battery" title="Güç Kaynağı">PİL</div>
+            
+            <div id="bulb1" class="component bulb" onclick="breakBulb(1)" title="Ampul 1"></div>
+            <div id="bulb2" class="component bulb" onclick="breakBulb(2)" title="Ampul 2"></div>
+
+            <div id="mainSwitch" class="component switch-box" onclick="toggleSwitch()">
+                <div class="switch-toggle"></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="info-panel" id="statusMsg">
+                Sistem Hazır. Anahtarı kapatarak devreyi başlat.
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button onclick="changeMode()">MODU DEĞİŞTİR</button>
+                <button onclick="resetLab()" style="background: #475569; color: white;">SİSTEMİ SIFIRLA</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isSystemOn = false;
+        let isParallel = false;
+        let b1Broken = false;
+        let b2Broken = false;
+
+        function toggleSwitch() {
+            isSystemOn = !isSystemOn;
+            document.getElementById('mainSwitch').classList.toggle('on');
+            updateCircuit();
+        }
+
+        function changeMode() {
+            isParallel = !isParallel;
+            document.getElementById('modeDisplay').innerText = isParallel ? "MOD: PARALEL BAĞLAMA" : "MOD: SERİ BAĞLAMA";
+            resetLab();
+        }
+
+        function breakBulb(num) {
+            if(num === 1) b1Broken = !b1Broken;
+            if(num === 2) b2Broken = !b2Broken;
+            
+            const b = document.getElementById('bulb' + num);
+            b.style.opacity = (num === 1 ? b1Broken : b2Broken) ? "0.3" : "1";
+            updateCircuit();
+        }
+
+        function updateCircuit() {
+            const b1 = document.getElementById('bulb1');
+            const b2 = document.getElementById('bulb2');
+            const paths = document.querySelectorAll('.wire-line');
+            const msg = document.getElementById('statusMsg');
+
+            let b1Light = false;
+            let b2Light = false;
+
+            if (isSystemOn) {
+                if (isParallel) {
+                    // Paralel: Biri bozuk olsa da diğeri yanar
+                    b1Light = !b1Broken;
+                    b2Light = !b2Broken;
+                    msg.innerHTML = "<strong>Paralel Devre:</strong> Akım kollar ayrılır. Bir ampul patlasa da diğeri yanmaya devam eder!";
+                } else {
+                    // Seri: Biri bozuksa devre kesilir
+                    if (!b1Broken && !b2Broken) {
+                        b1Light = true;
+                        b2Light = true;
+                        msg.innerHTML = "<strong>Seri Devre:</strong> Tüm ampuller aynı hat üzerinde. Biri sönerse hepsi söner!";
+                    } else {
+                        msg.innerHTML = "<strong>Devre Kesildi!</strong> Seri bağlamada kopukluk tüm sistemi durdurur.";
+                    }
+                }
+            } else {
+                msg.innerText = "Anahtar açık. Akım geçmiyor.";
+            }
+
+            // Görsel güncelleme
+            if(b1Light) b1.classList.add('active'); else b1.classList.remove('active');
+            if(b2Light) b2.classList.add('active'); else b2.classList.remove('active');
+            
+            paths.forEach(p => {
+                if(isSystemOn && (b1Light || b2Light)) p.classList.add('active');
+                else p.classList.remove('active');
+            });
+        }
+
+        function resetLab() {
+            isSystemOn = false;
+            b1Broken = false;
+            b2Broken = false;
+            document.getElementById('mainSwitch').classList.remove('on');
+            document.getElementById('bulb1').style.opacity = "1";
+            document.getElementById('bulb2').style.opacity = "1";
+            updateCircuit();
+        }
+    </script>
+</body>
+</html>
