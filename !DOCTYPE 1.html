@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kerem Uyar - Gelişmiş Direnç Laboratuvarı</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f1f5f9;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            color: #1e293b;
+        }
+
+        .signature {
+            font-family: 'Dancing Script', cursive;
+            font-size: 4rem;
+            color: #0f172a;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.05);
+        }
+
+        .container {
+            background: white;
+            padding: 35px;
+            border-radius: 30px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 650px;
+            border: 1px solid #e2e8f0;
+        }
+
+        h2 { margin-top: 0; color: var(--primary); }
+
+        .lab-bench {
+            background: #1e293b;
+            height: 220px;
+            border-radius: 20px;
+            position: relative;
+            margin: 25px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 12px solid #0f172a;
+            overflow: hidden;
+        }
+
+        /* Test Edilen Tel */
+        #test-wire {
+            height: 10px;
+            width: 150px;
+            background: #cd7f32;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            border-radius: 10px;
+            z-index: 2;
+        }
+
+        .bulb-container {
+            position: absolute;
+            top: 30px;
+            right: 50px;
+            text-align: center;
+        }
+
+        .bulb {
+            width: 65px;
+            height: 65px;
+            background: #475569;
+            border-radius: 50% 50% 15% 15%;
+            transition: 0.3s;
+            border: 4px solid #0f172a;
+            position: relative;
+            margin: 0 auto;
+        }
+
+        .bulb::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 12px;
+            background: #94a3b8;
+            border-radius: 0 0 4px 4px;
+        }
+
+        .bulb-glow {
+            background: #fbbf24;
+            box-shadow: 0 0 60px #fbbf24;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: #f8fafc;
+            padding: 25px;
+            border-radius: 20px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        select {
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+        }
+
+        select:focus { border-color: var(--primary); }
+
+        .info-card {
+            margin-top: 20px;
+            padding: 15px;
+            background: #eff6ff;
+            color: #1e40af;
+            border-radius: 12px;
+            font-weight: 600;
+            border-left: 5px solid var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="signature">Kerem Uyar</div>
+
+    <div class="container">
+        <h2>🔬 İletkenlik ve Direnç Testi</h2>
+        <p>Maddelerin cinsine, boyuna ve kalınlığına göre direnç değişimini gözlemle.</p>
+
+        <div class="lab-bench">
+            <div id="test-wire"></div>
+            
+            <div class="bulb-container">
+                <div id="bulb" class="bulb"></div>
+                <div style="color: #94a3b8; font-size: 11px; margin-top: 15px; font-weight: bold; letter-spacing: 1px;">AMPUL</div>
+            </div>
+
+            <div style="position:absolute; left: 40px; bottom: 30px; background: #ef4444; padding: 12px 20px; color: white; border-radius: 8px; font-weight: 800; box-shadow: 0 4px 0 #b91c1c;">GÜÇ KAYNAĞI</div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <div class="label-row">
+                    <span>Tel Uzunluğu (Boy)</span>
+                    <span id="l-text" style="color: var(--primary);">Normal</span>
+                </div>
+                <input type="range" id="length" min="60" max="280" value="150" oninput="update()">
+            </div>
+
+            <div class="control-group">
+                <div class="label-row">
+                    <span>Tel Kesit Alanı (Kalınlık)</span>
+                    <span id="t-text" style="color: var(--primary);">Normal</span>
+                </div>
+                <input type="range" id="thickness" min="4" max="30" value="12" oninput="update()">
+            </div>
+
+            <div class="control-group">
+                <div class="label-row"><span>İletken Maddenin Cinsi</span></div>
+                <select id="material" onchange="update()">
+                    <option value="1.6" data-color="#e5e7eb">Gümüş (En İletken)</option>
+                    <option value="1.7" data-color="#ea580c" selected>Bakır (Çok İletken)</option>
+                    <option value="2.4" data-color="#fbbf24">Altın (Yüksek İletken)</option>
+                    <option value="2.8" data-color="#cbd5e1">Alüminyum (İyi İletken)</option>
+                    <option value="10" data-color="#64748b">Demir (Düşük İletken)</option>
+                    <option value="15" data-color="#334155">Kurşun Kalem Ucu - Grafit</option>
+                    <option value="100" data-color="#475569">Nikel-Krom (Direnç Teli)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="info-card" id="status">
+            Sistem hazır. Parametreleri değiştirerek deneye başla!
+        </div>
+    </div>
+
+    <script>
+        function update() {
+            const L = document.getElementById('length').value;
+            const A = document.getElementById('thickness').value;
+            const matSelect = document.getElementById('material');
+            const rho = matSelect.value;
+            const wireColor = matSelect.options[matSelect.selectedIndex].getAttribute('data-color');
+            
+            const wire = document.getElementById('test-wire');
+            const bulb = document.getElementById('bulb');
+            const status = document.getElementById('status');
+
+            // Görseli Güncelle
+            wire.style.width = L + "px";
+            wire.style.height = A + "px";
+            wire.style.backgroundColor = wireColor;
+            
+            // Direnç Hesaplama Mantığı (R = rho * L / A)
+            // 6. sınıf seviyesi için basitleştirilmiş parlaklık algoritması
+            let resistance = (rho * L) / (A * 5);
+            let brightness = 255 - (resistance * 3);
+            
+            // Sınırları belirle
+            if(brightness < 20) brightness = 20; 
+            if(brightness > 255) brightness = 255;
+
+            // Ampulü yak
+            if(brightness > 60) {
+                bulb.style.backgroundColor = `rgb(${brightness}, ${brightness * 0.8}, 0)`;
+                bulb.style.boxShadow = `0 0 ${brightness/3}px #fbbf24`;
+                bulb.classList.add('bulb-glow');
+            } else {
+                bulb.style.backgroundColor = "#475569";
+                bulb.style.boxShadow = "none";
+                bulb.classList.remove('bulb-glow');
+            }
+
+            // Metin Güncellemeleri
+            document.getElementById('l-text').innerText = L > 220 ? "Çok Uzun" : (L < 100 ? "Çok Kısa" : "Normal");
+            document.getElementById('t-text').innerText = A > 22 ? "Çok Kalın" : (A < 8 ? "Çok İnce" : "Normal");
+
+            // Analiz Metni
+            if(resistance < 10) {
+                status.innerText = "Direnç düşük, ampul ışıl ışıl yanıyor! ✨";
+                status.style.color = "#166534";
+                status.style.borderColor = "#22c55e";
+            } else if(resistance < 35) {
+                status.innerText = "Direnç orta seviyede, normal parlaklık.";
+                status.style.color = "#1e40af";
+                status.style.borderColor = "#3b82f6";
+            } else {
+                status.innerText = "Yüksek direnç! Akım geçmekte zorlanıyor. ⚡";
+                status.style.color = "#991b1b";
+                status.style.borderColor = "#ef4444";
+            }
+        }
+
+        // Başlangıç ayarı
+        update();
+    </script>
+</body>
+</html>
